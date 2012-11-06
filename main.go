@@ -7,10 +7,13 @@ import (
   "crypto/md5"
   "crypto/sha1"
   "crypto/sha256"
+  "encoding/binary"
+  "bytes"
   "os"
 )
 
-const FILTER_SIZE = 32
+const FILTER_SIZE = 32 // in bytes
+const FILTER_INDEX_SIZE = FILTER_SIZE * 8 // in bits
 
 func GetLines(file_name string) [][]byte {
   var result [][]byte // empty array
@@ -38,63 +41,74 @@ func PrintAsStrings(data [][]byte) {
 }
 
 
-func ToXBytes(data []byte) [FILTER_SIZE]byte {
-  var result [FILTER_SIZE]byte
-  for i, d := range data {
-    if i >= FILTER_SIZE {
-      break
-    }
-    result[i] = d
-  }
-  return result
-}
-
-func Md5sum(data []byte) [FILTER_SIZE]byte {
+func Md5sum(data []byte) []byte {
   var md5 = md5.New()
   md5.Write(data)
-  return ToXBytes(md5.Sum(nil))
+  return md5.Sum(nil)
 }
 
 
-func Sha1(data []byte) [FILTER_SIZE]byte {
+func Sha1(data []byte) []byte {
   var h = sha1.New()
   h.Write(data)
-  return ToXBytes(h.Sum(nil))
+  return h.Sum(nil)
 }
 
-func Sha256(data []byte) [FILTER_SIZE]byte {
+func Sha256(data []byte) []byte {
   var h = sha256.New()
   h.Write(data)
-  return ToXBytes(h.Sum(nil))
+  return h.Sum(nil)
 }
 
-func Or(d1 [FILTER_SIZE]byte, d2[FILTER_SIZE]byte) [FILTER_SIZE]byte {
-  var result [FILTER_SIZE]byte
-  for i, _ := range d1 {
-    result[i] = d1[i] | d2[i]
+func ToIndex(data []byte, max_val int) int {
+  buf := bytes.NewBuffer(data)
+  result, err := binary.ReadUvarint(buf)
+  if err != nil {
+    panic(err)
   }
-  return result
+  return int(result) % max_val
 }
 
-func OrHashes(data []byte) [FILTER_SIZE]byte {
-  var result [FILTER_SIZE]byte
-
-  result = Or(result, Md5sum(data))
-  result = Or(result, Sha1(data))
-  result = Or(result, Sha256(data))
-
-  return result
+func SetBit(bloom_filter *[FILTER_SIZE]byte, index int) {
+  loc := index / 8
+  bloom_filter[loc] |= 2 << uint(index % 8) 
 }
 
+func IsBitSet(bloom_filter [FILTER_SIZE]byte, index int) bool {
+  loc := index / 8
+  return (bloom_filter[loc] & byte(2 << uint(index % 8))) != 0
+}
+
+func DataToBloomIndex(d []byte) int {
+  var hashes []byte = Md5sum(d)
+  index := ToIndex(hashes, FILTER_INDEX_SIZE)
+
+  fmt.Printf("%s, %x\n", d, hashes)
+  fmt.Printf("%s, %x\n", d, index)
+
+  return index
+}
 func main() {
   var data = GetLines("data")
+  var test = GetLines("input")
   PrintAsStrings(data)
   var bloom_filter [FILTER_SIZE]byte
   
   for _, d := range data {
-    var hashes [FILTER_SIZE]byte = OrHashes(d)
-    fmt.Printf("%s, %x\n", d, hashes)
-    bloom_filter = Or(bloom_filter, hashes)
+    output := DataToBloomIndex(d)
+
+    SetBit(&bloom_filter, output)
+  }
+
+  for _, d := range test {
+    output := DataToBloomIndex(d)
+
+    fmt.Printf("%s", d)
+    if IsBitSet(bloom_filter, output) {
+      fmt.Printf(" True\n")
+    } else {
+      fmt.Printf(" False\n")
+    }
   }
 
   fmt.Printf("BLOOM-FILTER is %x\n", bloom_filter)
