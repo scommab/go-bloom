@@ -1,4 +1,4 @@
-package main
+package bloom
 
 import (
   "fmt"
@@ -29,26 +29,23 @@ func GetLines(file_name string) [][]byte {
 func TestBloomTest(t *testing.T) {
   var data = GetLines("data")
   var test = GetLines("input")
-  //PrintAsStrings(data)
-  var bloom_filter [FILTER_SIZE]byte
+  filter := new(BloomFilter)
   
   for _, d := range data {
-    output := DataToBloomIndex(d)
-
-    SetBit(&bloom_filter, output)
+    filter.Add(d)
   }
 
   for _, d := range test {
-    output := DataToBloomIndex(d)
+    has := filter.Has(d)
 
     fmt.Printf("%s", d)
-    if IsBitSet(bloom_filter, output) {
+    if has {
       fmt.Printf(" True\n")
     } else {
       fmt.Printf(" False\n")
     }
   }
 
- fmt.Printf("BLOOM-FILTER is %x\n", bloom_filter)
+ fmt.Printf("BLOOM-FILTER is %x\n", filter.bloom_filter)
 
 }
