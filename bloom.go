@@ -14,6 +14,9 @@ type BloomFilter struct {
 	probe        int
 }
 
+// Create a new Bloom filter.
+// size - describes the number of bytes the Bloom filter.
+// probe - the number of probes each insert/lookup uses.
 func MakeBloomFilter(size int, probe int) *BloomFilter {
 	result := new(BloomFilter)
 	result.bloom_filter = make([]byte, size)
@@ -59,6 +62,7 @@ func DataToBloomIndex(d []byte) ([]byte, int) {
 	return hash, index
 }
 
+// Add an item to the Bloom filter
 func (b *BloomFilter) Add(d []byte) {
 	hash, output := DataToBloomIndex(d)
 	b.SetBit(output)
@@ -68,6 +72,9 @@ func (b *BloomFilter) Add(d []byte) {
 	}
 }
 
+// Check if a value is in the Bloom filter.
+// Returns False if the value definitely isn't in the Bloom filter.
+// Returns True if the value could be in the Bloom filter.
 func (b *BloomFilter) Has(d []byte) bool {
 	result := true
 	hash, output := DataToBloomIndex(d)
