@@ -6,11 +6,20 @@ import (
   "bytes"
 )
 
-const FILTER_SIZE = 17 // in bytes
-const FILTER_INDEX_SIZE = FILTER_SIZE * 8 // in bits
+const BITS_IN_BLOOM_TYPE = 8
 
 type BloomFilter struct {
-  bloom_filter [FILTER_SIZE]byte
+  bloom_filter []byte
+  size int
+  probe int
+}
+
+func MakeBloomFilter(size int, probe int) *BloomFilter {
+  result := new(BloomFilter)
+  result.bloom_filter = make([]byte, size)
+  result.size = size
+  result.probe = probe 
+  return result
 }
 
 func Sha1(data []byte) []byte {
@@ -19,37 +28,53 @@ func Sha1(data []byte) []byte {
   return h.Sum(nil)
 }
 
-func ToIndex(data []byte, max_val int) int {
+func ToIndex(data []byte) int {
   buf := bytes.NewBuffer(data)
-  result, err := binary.ReadUvarint(buf)
+  result_64, err := binary.ReadVarint(buf)
+  result := int(result_64)
   if err != nil {
     panic(err)
   }
-  return int(result) % max_val
+  if result < 0 {
+    result = -result
+  }
+  return result
 }
 
-func SetBit(bloom_filter *[FILTER_SIZE]byte, index int) {
-  loc := index / 8
-  bloom_filter[loc] |= 1 << uint(index % 8) 
+func (b *BloomFilter) SetBit(index int) {
+  index = index % (b.size * BITS_IN_BLOOM_TYPE)
+  loc := index / BITS_IN_BLOOM_TYPE
+  b.bloom_filter[loc] |= 1 << uint(index % BITS_IN_BLOOM_TYPE) 
 }
 
-func IsBitSet(bloom_filter [FILTER_SIZE]byte, index int) bool {
-  loc := index / 8
-  return (bloom_filter[loc] & byte(1 << uint(index % 8))) != 0
+func (b *BloomFilter) IsBitSet(index int) bool {
+  index = index % (b.size * BITS_IN_BLOOM_TYPE)
+  loc := index / BITS_IN_BLOOM_TYPE
+  return (b.bloom_filter[loc] & byte(1 << uint(index % BITS_IN_BLOOM_TYPE))) != 0
 }
 
-func DataToBloomIndex(d []byte) int {
-  var hashes []byte = Sha1(d)
-  index := ToIndex(hashes, FILTER_INDEX_SIZE)
-  return index
+func DataToBloomIndex(d []byte) ([]byte, int) {
+  var hash []byte = Sha1(d)
+  index := ToIndex(hash)
+  return hash, index
 }
 
 func (b *BloomFilter) Add(d []byte) {
-  output := DataToBloomIndex(d)
-  SetBit(&b.bloom_filter, output)
+  hash, output := DataToBloomIndex(d)
+  b.SetBit(output)
+  for i := 0; i < b.probe - 1; i++ {
+    hash, output = DataToBloomIndex(hash)
+    b.SetBit(output)
+  }
 }
 
 func (b *BloomFilter) Has(d []byte) bool {
-  output := DataToBloomIndex(d)
-  return IsBitSet(b.bloom_filter, output)
+  result := true
+  hash, output := DataToBloomIndex(d)
+  result = result && b.IsBitSet(output)
+  for i := 0; i < b.probe - 1; i++ {
+    hash, output = DataToBloomIndex(hash)
+    result = result && b.IsBitSet(output)
+  }
+  return result
 }

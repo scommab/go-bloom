@@ -41,11 +41,12 @@ func printHas(filter *BloomFilter, d []byte) bool {
 func TestBloomTest(t *testing.T) {
   var data = GetLines("data")
   var test = GetLines("input")
-  filter := new(BloomFilter)
+  filter := MakeBloomFilter(3, 2) //new(BloomFilter)
   
   for _, d := range data {
     filter.Add(d)
   }
+ fmt.Printf("BLOOM-FILTER is %x\n", filter.bloom_filter)
 
 
   for _, d := range data {
@@ -60,6 +61,5 @@ func TestBloomTest(t *testing.T) {
     }
   }
 
- fmt.Printf("BLOOM-FILTER is %x\n", filter.bloom_filter)
 
 }
