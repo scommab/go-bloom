@@ -26,6 +26,18 @@ func GetLines(file_name string) [][]byte {
   return result
 }
 
+func printHas(filter *BloomFilter, d []byte) bool {
+  has := filter.Has(d)
+
+  fmt.Printf("%s", d)
+  if has {
+    fmt.Printf(" True\n")
+  } else {
+    fmt.Printf(" False\n")
+  }
+  return has
+}
+
 func TestBloomTest(t *testing.T) {
   var data = GetLines("data")
   var test = GetLines("input")
@@ -35,14 +47,16 @@ func TestBloomTest(t *testing.T) {
     filter.Add(d)
   }
 
-  for _, d := range test {
-    has := filter.Has(d)
 
-    fmt.Printf("%s", d)
-    if has {
-      fmt.Printf(" True\n")
-    } else {
-      fmt.Printf(" False\n")
+  for _, d := range data {
+    if printHas(filter, d) != true {
+      t.Fatalf("Failed Match")
+    }
+  }
+
+  for _, d := range test {
+    if printHas(filter, d) != false {
+      t.Fatalf("Failed Match")
     }
   }
 
