@@ -67,5 +67,34 @@ func TestBloom(t *testing.T) {
 			t.Fatalf("Failed Match")
 		}
 	}
+}
 
+func BenchmarkBloomBuild(b *testing.B) {
+	var data = GetLines("test_data/test1_keys")
+	filter := MakeBloomFilter(1, 2) //new(BloomFilter)
+
+	for i := 0; i < b.N; i++ {
+		for _, d := range data {
+			filter.Add(d)
+		}
+	}
+}
+
+func BenchmarkBloomLookup(b *testing.B) {
+	var data = GetLines("test_data/test1_keys")
+	var test = GetLines("test_data/test1_invalid")
+	filter := MakeBloomFilter(1, 2) //new(BloomFilter)
+
+	for _, d := range data {
+		filter.Add(d)
+	}
+	for i := 0; i < b.N; i++ {
+		for _, d := range data {
+			filter.Has(d)
+		}
+
+		for _, d := range test {
+			filter.Has(d)
+		}
+	}
 }
