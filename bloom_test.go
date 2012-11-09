@@ -46,10 +46,14 @@ func printFilter(filter *BloomFilter) {
 	fmt.Printf("BLOOM FILTER: % x\n", buf.Bytes())
 }
 
+func getTest1Data() ([][]byte, [][]byte, *BloomFilter) {
+	return GetLines("test_data/test1_keys"),
+		GetLines("test_data/test1_invalid"),
+		MakeBloomFilter(1, 2)
+}
+
 func TestBloom(t *testing.T) {
-	var data = GetLines("test_data/test1_keys")
-	var test = GetLines("test_data/test1_invalid")
-	filter := MakeBloomFilter(1, 2) //new(BloomFilter)
+	data, test, filter := getTest1Data()
 
 	for _, d := range data {
 		filter.Add(d)
@@ -70,8 +74,7 @@ func TestBloom(t *testing.T) {
 }
 
 func BenchmarkBloomBuild(b *testing.B) {
-	var data = GetLines("test_data/test1_keys")
-	filter := MakeBloomFilter(1, 2) //new(BloomFilter)
+	data, _, filter := getTest1Data()
 
 	for i := 0; i < b.N; i++ {
 		for _, d := range data {
@@ -81,9 +84,7 @@ func BenchmarkBloomBuild(b *testing.B) {
 }
 
 func BenchmarkBloomLookup(b *testing.B) {
-	var data = GetLines("test_data/test1_keys")
-	var test = GetLines("test_data/test1_invalid")
-	filter := MakeBloomFilter(1, 2) //new(BloomFilter)
+	data, test, filter := getTest1Data()
 
 	for _, d := range data {
 		filter.Add(d)
