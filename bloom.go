@@ -10,14 +10,14 @@ const BITS_IN_BLOOM_TYPE = 8
 
 type BloomFilter struct {
 	bloom_filter []byte
-	size         int
+	size         uint
 	probe        int
 }
 
 // Create a new Bloom filter.
 // size - describes the number of bytes the Bloom filter.
 // probe - the number of probes each insert/lookup uses.
-func MakeBloomFilter(size int, probe int) *BloomFilter {
+func MakeBloomFilter(size uint, probe int) *BloomFilter {
 	result := new(BloomFilter)
 	result.bloom_filter = make([]byte, size)
 	result.size = size
@@ -31,32 +31,28 @@ func Sha1(data []byte) []byte {
 	return h.Sum(nil)
 }
 
-func ToIndex(data []byte) int {
+func ToIndex(data []byte) uint {
 	buf := bytes.NewBuffer(data)
-	result_64, err := binary.ReadVarint(buf)
-	result := int(result_64)
+	result, err := binary.ReadUvarint(buf)
 	if err != nil {
 		panic(err)
 	}
-	if result < 0 {
-		result = -result
-	}
-	return result
+	return uint(result)
 }
 
-func (b *BloomFilter) SetBit(index int) {
+func (b *BloomFilter) SetBit(index uint) {
 	index = index % (b.size * BITS_IN_BLOOM_TYPE)
 	loc := index / BITS_IN_BLOOM_TYPE
 	b.bloom_filter[loc] |= 1 << uint(index%BITS_IN_BLOOM_TYPE)
 }
 
-func (b *BloomFilter) IsBitSet(index int) bool {
+func (b *BloomFilter) IsBitSet(index uint) bool {
 	index = index % (b.size * BITS_IN_BLOOM_TYPE)
 	loc := index / BITS_IN_BLOOM_TYPE
 	return (b.bloom_filter[loc] & byte(1<<uint(index%BITS_IN_BLOOM_TYPE))) != 0
 }
 
-func DataToBloomIndex(d []byte) ([]byte, int) {
+func DataToBloomIndex(d []byte) ([]byte, uint) {
 	var hash []byte = Sha1(d)
 	index := ToIndex(hash)
 	return hash, index
