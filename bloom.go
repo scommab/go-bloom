@@ -6,10 +6,10 @@ import (
 	"encoding/binary"
 )
 
-const BITS_IN_BLOOM_TYPE = 8
+const BITS_IN_BLOOM_TYPE = 64
 
 type BloomFilter struct {
-	bloom_filter []byte
+	bloom_filter []uint64
 	size         uint
 	probe        int
 }
@@ -19,7 +19,7 @@ type BloomFilter struct {
 // probe - the number of probes each insert/lookup uses.
 func MakeBloomFilter(size uint, probe int) *BloomFilter {
 	result := new(BloomFilter)
-	result.bloom_filter = make([]byte, size)
+	result.bloom_filter = make([]uint64, size)
 	result.size = size
 	result.probe = probe
 	return result
@@ -43,13 +43,13 @@ func ToIndex(data []byte) uint {
 func (b *BloomFilter) SetBit(index uint) {
 	index = index % (b.size * BITS_IN_BLOOM_TYPE)
 	loc := index / BITS_IN_BLOOM_TYPE
-	b.bloom_filter[loc] |= 1 << uint(index%BITS_IN_BLOOM_TYPE)
+	b.bloom_filter[loc] |= 1 << uint(index % BITS_IN_BLOOM_TYPE)
 }
 
 func (b *BloomFilter) IsBitSet(index uint) bool {
 	index = index % (b.size * BITS_IN_BLOOM_TYPE)
 	loc := index / BITS_IN_BLOOM_TYPE
-	return (b.bloom_filter[loc] & byte(1<<uint(index%BITS_IN_BLOOM_TYPE))) != 0
+	return (b.bloom_filter[loc] & (1<<uint(index % BITS_IN_BLOOM_TYPE))) != 0
 }
 
 func DataToBloomIndex(d []byte) ([]byte, uint) {

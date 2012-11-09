@@ -2,6 +2,8 @@ package bloom
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"os"
 	"testing"
@@ -38,15 +40,21 @@ func printHas(filter *BloomFilter, d []byte) bool {
 	return has
 }
 
+func printFilter(filter *BloomFilter) {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, filter.bloom_filter)
+	fmt.Printf("BLOOM FILTER: % x\n", buf.Bytes())
+}
+
 func TestBloom(t *testing.T) {
 	var data = GetLines("test_data/test1_keys")
 	var test = GetLines("test_data/test1_invalid")
-	filter := MakeBloomFilter(3, 2) //new(BloomFilter)
+	filter := MakeBloomFilter(1, 2) //new(BloomFilter)
 
 	for _, d := range data {
 		filter.Add(d)
 	}
-	fmt.Printf("BLOOM-FILTER is %x\n", filter.bloom_filter)
+	printFilter(filter)
 
 	for _, d := range data {
 		if printHas(filter, d) != true {
