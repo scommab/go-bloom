@@ -25,13 +25,13 @@ func MakeBloomFilter(size uint, probe int) *BloomFilter {
 	return result
 }
 
-func Sha1(data []byte) []byte {
+func sha1_hash(data []byte) []byte {
 	var h = sha1.New()
 	h.Write(data)
 	return h.Sum(nil)
 }
 
-func ToIndex(data []byte) uint {
+func toIndex(data []byte) uint {
 	buf := bytes.NewBuffer(data)
 	result, err := binary.ReadUvarint(buf)
 	if err != nil {
@@ -40,31 +40,31 @@ func ToIndex(data []byte) uint {
 	return uint(result)
 }
 
-func (b *BloomFilter) SetBit(index uint) {
+func (b *BloomFilter) setBit(index uint) {
 	index = index % (b.size * BITS_IN_BLOOM_TYPE)
 	loc := index / BITS_IN_BLOOM_TYPE
 	b.bloom_filter[loc] |= 1 << uint(index % BITS_IN_BLOOM_TYPE)
 }
 
-func (b *BloomFilter) IsBitSet(index uint) bool {
+func (b *BloomFilter) isBitSet(index uint) bool {
 	index = index % (b.size * BITS_IN_BLOOM_TYPE)
 	loc := index / BITS_IN_BLOOM_TYPE
 	return (b.bloom_filter[loc] & (1<<uint(index % BITS_IN_BLOOM_TYPE))) != 0
 }
 
-func DataToBloomIndex(d []byte) ([]byte, uint) {
-	var hash []byte = Sha1(d)
-	index := ToIndex(hash)
+func dataToBloomIndex(d []byte) ([]byte, uint) {
+	var hash []byte = sha1_hash(d)
+	index := toIndex(hash)
 	return hash, index
 }
 
 // Add an item to the Bloom filter
 func (b *BloomFilter) Add(d []byte) {
-	hash, output := DataToBloomIndex(d)
-	b.SetBit(output)
+	hash, output := dataToBloomIndex(d)
+	b.setBit(output)
 	for i := 0; i < b.probe-1; i++ {
-		hash, output = DataToBloomIndex(hash)
-		b.SetBit(output)
+		hash, output = dataToBloomIndex(hash)
+		b.setBit(output)
 	}
 }
 
@@ -73,11 +73,11 @@ func (b *BloomFilter) Add(d []byte) {
 // Returns True if the value could be in the Bloom filter.
 func (b *BloomFilter) Has(d []byte) bool {
 	result := true
-	hash, output := DataToBloomIndex(d)
-	result = result && b.IsBitSet(output)
+	hash, output := dataToBloomIndex(d)
+	result = result && b.isBitSet(output)
 	for i := 0; i < b.probe-1; i++ {
-		hash, output = DataToBloomIndex(hash)
-		result = result && b.IsBitSet(output)
+		hash, output = dataToBloomIndex(hash)
+		result = result && b.isBitSet(output)
 	}
 	return result
 }
