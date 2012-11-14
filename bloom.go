@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/binary"
+	"encoding/json"
 )
 
 const BITS_IN_BLOOM_TYPE = 64
@@ -58,7 +59,20 @@ func MakeBloomFilter(size uint, probe int) *BloomFilter {
 	return result
 }
 
-// Add an item to the Bloom filter
+// Export the bloom filter (encoded in Json)
+func (b *BloomFilter) Export() ([]byte, error) {
+	r, err := json.Marshal(b)
+	return r, err
+}
+
+// Load an exported bloom filter
+func MakeBloomFilterFromJson(jsonBlob []byte) (*BloomFilter, error) {
+	result := new(BloomFilter)
+	err := json.Unmarshal(jsonBlob, &result)
+	return result, err
+}
+
+//Add an item to the Bloom filter
 func (b *BloomFilter) Add(d []byte) {
 	hash, output := dataToBloomIndex(d)
 	b.setBit(output)

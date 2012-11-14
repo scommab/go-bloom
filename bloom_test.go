@@ -73,6 +73,29 @@ func TestBloom(t *testing.T) {
 	}
 }
 
+func TestBloomExportImport(t *testing.T) {
+	data, test, filter := getTest1Data()
+
+	for _, d := range data {
+		filter.Add(d)
+	}
+
+	blob, _ := filter.Export()
+	filter2, _ := MakeBloomFilterFromJson(blob)
+
+	for _, d := range data {
+		if printHas(filter2, d) != true {
+			t.Fatalf("Failed Match")
+		}
+	}
+
+	for _, d := range test {
+		if printHas(filter2, d) != false {
+			t.Fatalf("Failed Match")
+		}
+	}
+}
+
 func BenchmarkBloomBuild(b *testing.B) {
 	data, _, filter := getTest1Data()
 
