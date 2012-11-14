@@ -9,9 +9,9 @@ import (
 const BITS_IN_BLOOM_TYPE = 64
 
 type BloomFilter struct {
-	bloom_filter []uint64
-	size         uint
-	probe        int
+	Bloom_filter []uint64
+	Size         uint
+	Probe        int
 }
 
 func sha1_hash(data []byte) []byte {
@@ -30,15 +30,15 @@ func toIndex(data []byte) uint {
 }
 
 func (b *BloomFilter) setBit(index uint) {
-	index = index % (b.size * BITS_IN_BLOOM_TYPE)
+	index = index % (b.Size * BITS_IN_BLOOM_TYPE)
 	loc := index / BITS_IN_BLOOM_TYPE
-	b.bloom_filter[loc] |= 1 << uint(index%BITS_IN_BLOOM_TYPE)
+	b.Bloom_filter[loc] |= 1 << (index % BITS_IN_BLOOM_TYPE)
 }
 
 func (b *BloomFilter) isBitSet(index uint) bool {
-	index = index % (b.size * BITS_IN_BLOOM_TYPE)
+	index = index % (b.Size * BITS_IN_BLOOM_TYPE)
 	loc := index / BITS_IN_BLOOM_TYPE
-	return (b.bloom_filter[loc] & (1 << uint(index%BITS_IN_BLOOM_TYPE))) != 0
+	return (b.Bloom_filter[loc] & (1 << (index % BITS_IN_BLOOM_TYPE))) != 0
 }
 
 func dataToBloomIndex(d []byte) ([]byte, uint) {
@@ -52,9 +52,9 @@ func dataToBloomIndex(d []byte) ([]byte, uint) {
 // probe - the number of probes each insert/lookup uses.
 func MakeBloomFilter(size uint, probe int) *BloomFilter {
 	result := new(BloomFilter)
-	result.bloom_filter = make([]uint64, size)
-	result.size = size
-	result.probe = probe
+	result.Bloom_filter = make([]uint64, size)
+	result.Size = size
+	result.Probe = probe
 	return result
 }
 
@@ -62,7 +62,7 @@ func MakeBloomFilter(size uint, probe int) *BloomFilter {
 func (b *BloomFilter) Add(d []byte) {
 	hash, output := dataToBloomIndex(d)
 	b.setBit(output)
-	for i := 0; i < b.probe-1; i++ {
+	for i := 0; i < b.Probe-1; i++ {
 		hash, output = dataToBloomIndex(hash)
 		b.setBit(output)
 	}
@@ -76,7 +76,7 @@ func (b *BloomFilter) Has(d []byte) bool {
 	if !b.isBitSet(output) {
 		return false
 	}
-	for i := 0; i < b.probe-1; i++ {
+	for i := 0; i < b.Probe-1; i++ {
 		hash, output = dataToBloomIndex(hash)
 		if !b.isBitSet(output) {
 			return false

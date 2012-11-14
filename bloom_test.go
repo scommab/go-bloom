@@ -42,7 +42,7 @@ func printHas(filter *BloomFilter, d []byte) bool {
 
 func printFilter(filter *BloomFilter) {
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, filter.bloom_filter)
+	binary.Write(buf, binary.LittleEndian, filter.Bloom_filter)
 	fmt.Printf("BLOOM FILTER: % x\n", buf.Bytes())
 }
 
