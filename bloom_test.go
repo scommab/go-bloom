@@ -106,6 +106,31 @@ func BenchmarkBloomBuild(b *testing.B) {
 	}
 }
 
+func BenchmarkBloomExport(b *testing.B) {
+	data, _, filter := getTest1Data()
+
+	for _, d := range data {
+		filter.Add(d)
+	}
+
+	for i := 0; i < b.N; i++ {
+		filter.Export()
+	}
+}
+
+func BenchmarkBloomImport(b *testing.B) {
+	data, _, filter := getTest1Data()
+
+	for _, d := range data {
+		filter.Add(d)
+	}
+	blob, _ := filter.Export()
+
+	for i := 0; i < b.N; i++ {
+		MakeBloomFilterFromJson(blob)
+	}
+}
+
 func BenchmarkBloomLookup(b *testing.B) {
 	data, test, filter := getTest1Data()
 
