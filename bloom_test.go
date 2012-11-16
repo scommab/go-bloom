@@ -52,6 +52,12 @@ func getTest1Data() ([][]byte, [][]byte, *BloomFilter) {
 		MakeBloomFilter(1, 2)
 }
 
+func getTest2Data() ([][]byte, [][]byte, *BloomFilter) {
+	return GetLines("test_data/test2_keys"),
+		GetLines("test_data/test2_invalid"),
+		MakeBloomFilter(1, 1)
+}
+
 func TestBloom(t *testing.T) {
 	data, test, filter := getTest1Data()
 
@@ -73,6 +79,24 @@ func TestBloom(t *testing.T) {
 	}
 }
 
+func TestFlasePostivesBloom(t *testing.T) {
+	data, test, filter := getTest2Data()
+
+	for _, d := range data {
+		filter.Add(d)
+	}
+	printFilter(filter)
+
+	for _, d := range data {
+		printHas(filter, d)
+	}
+
+	for _, d := range test {
+		printHas(filter, d)
+	}
+
+}
+
 func TestBloomExportImport(t *testing.T) {
 	data, test, filter := getTest1Data()
 
@@ -82,6 +106,7 @@ func TestBloomExportImport(t *testing.T) {
 
 	blob, _ := filter.Export()
 	filter2, _ := MakeBloomFilterFromJson(blob)
+	printFilter(filter2)
 
 	for _, d := range data {
 		if printHas(filter2, d) != true {
