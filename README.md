@@ -1,5 +1,5 @@
 # go-bloom
-
+[![Build Status](https://secure.travis-ci.org/scommab/go-bloom.png?branch=master)](https://travis-ci.org/scommab/go-bloom)
 
 A bloom filter implemented in go
 
